@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Документы курьеров Меридиан</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 flex items-center justify-center font-sans">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2 text-center uppercase tracking-tight">Меридиан 🚛</h1>
+        <p class="text-blue-600 font-bold text-center mb-8 text-sm">ДОКУМЕНТЫ КУРЬЕРОВ</p>
+        
+        <form id="uploadForm" class="space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">ФИО Курьера</label>
+                <input type="text" id="fio" required 
+                    class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-blue-500 focus:bg-white outline-none transition-all" 
+                    placeholder="Фамилия Имя Отчество">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Скан-копии / Фото</label>
+                <div class="relative border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:bg-gray-50 transition-colors">
+                    <input type="file" id="photos" multiple accept="image/*" required
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div id="fileStatus" class="space-y-2">
+                        <span class="block text-blue-600 font-semibold">Нажмите для выбора</span>
+                        <span class="block text-gray-400 text-xs text-balance">Можно выбрать все страницы сразу</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" 
+                class="w-full bg-blue-700 hover:bg-blue-800 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all active:scale-95">
+                ОТПРАВИТЬ В БАЗУ
+            </button>
+
+            <div id="loader" class="hidden">
+                <div class="flex items-center justify-center space-x-2 animate-pulse">
+                    <div class="w-2 h-2 bg-blue-700 rounded-full"></div>
+                    <div class="w-2 h-2 bg-blue-700 rounded-full"></div>
+                    <div class="w-2 h-2 bg-blue-700 rounded-full"></div>
+                    <span class="text-blue-700 font-bold text-sm uppercase">Загрузка документов...</span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Проверь, что в n8n в узле Webhook путь именно photo-fix
+        const WEBHOOK_URL = 'https://n8n.evjn1.ru/webhook/photo-fix';
+
+        const fileInput = document.getElementById('photos');
+        const fileStatus = document.getElementById('fileStatus');
+
+        fileInput.onchange = () => {
+            if (fileInput.files.length > 0) {
+                fileStatus.innerHTML = `<span class="text-green-600 font-bold text-lg">Выбрано файлов: ${fileInput.files.length}</span>`;
+            }
+        };
+
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const loader = document.getElementById('loader');
+            
+            btn.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            const formData = new FormData();
+            formData.append('fio', document.getElementById('fio').value);
+
+            const files = fileInput.files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('file_' + i, files[i]);
+            }
+
+            try {
+                const response = await fetch(WEBHOOK_URL, { method: 'POST', body: formData });
+                if (response.ok) {
+                    alert(`✅ Спасибо, ${document.getElementById('fio').value}!\n\nВаши документы успешно загружены в базу "Меридиан".\nВы можете закрыть это окно.`);
+                    location.reload();
+                } else {
+                    alert('❌ Ошибка сервера: ' + response.status);
+                    resetUI();
+                }
+            } catch (err) {
+                alert('❌ Ошибка связи! Убедитесь, что n8n запущен (Listen for test event)');
+                resetUI();
+            }
+        };
+
+        function resetUI() {
+            document.getElementById('submitBtn').classList.remove('hidden');
+            document.getElementById('loader').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

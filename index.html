@@ -79,9 +79,10 @@
             try {
                 const response = await fetch(WEBHOOK_URL, { method: 'POST', body: formData });
                 if (response.ok) {
-                    alert(`✅ Спасибо, ${document.getElementById('fio').value}!\n\nВаши документы успешно загружены в базу "Меридиан".\nВы можете закрыть это окно.`);
-                    location.reload();
-                } else {
+            const fio = document.getElementById('fio').value;
+            alert(`✅ Готово!\n\nДокументы курьера ${fio} успешно загружены в базу "Меридиан".`);
+            location.reload();
+        } else {
                     alert('❌ Ошибка сервера: ' + response.status);
                     resetUI();
                 }
